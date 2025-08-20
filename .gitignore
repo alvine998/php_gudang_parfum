@@ -1,0 +1,23 @@
+# Jangan upload file zip atau arsip
+*.zip
+*.tar
+*.gz
+*.rar
+
+# Composer dependencies (bisa di-install ulang pakai composer install)
+vendor/
+
+# File composer lock kalau tidak ingin di-track
+# (opsional, biasanya tetap di-commit)
+# composer.lock
+
+# File konfigurasi sensitif
+koneksi.php
+
+# File sistem
+.DS_Store
+Thumbs.db
+
+# Folder cache atau temporary
+/tmp
+/cache
