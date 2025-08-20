@@ -164,6 +164,13 @@
                                                     <i class="fas fa-print"></i>
                                                     <span class="d-none d-lg-inline ms-1">QR</span>
                                                 </a>
+                                                <a href="tambah-stok-toko.php?id_toko=<?= $row['id'] ?>"
+                                                    class="btn btn-success btn-sm"
+                                                    target="_blank"
+                                                    title="Tambah Stok">
+                                                    <i class="fas fa-print"></i>
+                                                    <span class="d-none d-lg-inline ms-1">Tambah Stok</span>
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php
