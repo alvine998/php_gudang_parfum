@@ -26,7 +26,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="scan-result" class="form-label">Hasil Scan:</label>
-                                <input type="text" class="form-control" id="scan-result"  placeholder="Kode QR akan muncul di sini">
+                                <input type="text" class="form-control" id="scan-result" autofocus placeholder="Kode QR akan muncul di sini">
                             </div>
                         </div>
                     </div>
