@@ -174,21 +174,20 @@
     }
 
     function processBarcode(code = null) {
-        const barcodeValue = code || document.getElementById('manual-input').value || document.getElementById('scan-result').value;
+       const barcodeValue = code 
+        || (document.getElementById('scan-result')?.value ?? '')
+        || (document.getElementById('manual-input')?.value ?? '');
+
         if (!barcodeValue) {
             alert("Kode barcode kosong!");
             return;
         }
-        console.log("Barcode diproses:", barcode);
 
-        if (!barcodeValue) {
-            alert('Silakan scan QR code atau masukkan kode secara manual');
-            return;
-        }
+        console.log("Barcode diproses:", barcodeValue);
 
-        // Clear manual input after processing
-        if (document.getElementById('manual-input')) {
-            document.getElementById('manual-input').value = '';
+        // Update display
+        if (document.getElementById('scan-result')) {
+            document.getElementById('scan-result').value = barcodeValue;
         }
 
         // Update scan result display
@@ -408,16 +407,23 @@
         }, 1000);
 
          // Helper function untuk tambahkan listener Enter
-        function addEnterListener(id, callback) {
+       function addEnterListener(id, callback) {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
-                        callback();
+                        e.preventDefault(); // prevent form submit
+                        const value = el.value.trim();
+                        if (value) {
+                            callback(value); // pass the input value
+                        } else {
+                            alert("Input masih kosong!");
+                        }
                     }
                 });
             }
         }
+
 
             // Tambahkan event ke masing-masing input
         addEnterListener('manual-input', processBarcode);
