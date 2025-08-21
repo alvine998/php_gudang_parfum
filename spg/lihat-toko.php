@@ -76,6 +76,11 @@
                                                 <i class="fas fa-print me-1"></i>
                                                 Cetak QR Code
                                             </a>
+                                            <a href="tambah-stok-toko.php?id_toko=<?= $row['id'] ?>"
+                                                class="btn btn-success btn-sm mt-2" target="_blank">
+                                                <i class="fa fa-plus me-1"></i>
+                                                Tambah Stok
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
