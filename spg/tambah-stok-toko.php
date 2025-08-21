@@ -265,6 +265,21 @@ if (!$toko) {
         if (data.status === 'success') {
           showBarcodeInfo(data.data);
           showAlert('Barcode ditemukan!', 'success');
+          fetch('get-riwayat-stok-toko.php?id_toko=' + idToko)
+            .then(response => response.json())
+            .then(data2 => {
+              if (data2.data.length > 0) {
+                for (let item of data2.data) {
+                  if (item.nama_barang === data.data.nama_barang) {
+                    if (confirm(item.nama_barang + ' Sudah ada dalam riwayat penambahan. Apakah Anda ingin menambahkan stok barang ini ke toko?')) {
+                      showBarcodeInfo(data.data);
+                    } else {
+                      resetForm();
+                    }
+                  }
+                }
+              }
+            })
         } else {
           hideBarcodeInfo();
           showAlert(data.message, 'danger');
@@ -333,6 +348,18 @@ if (!$toko) {
   function hideBarcodeInfo() {
     document.getElementById('scan-result').style.display = 'block';
     document.getElementById('barcode-info').style.display = 'none';
+  }
+
+  function checkSameVariant(barcode) {
+    // Cek apakah barcode sudah ada di riwayat penambahan
+    const riwayatRows = document.querySelectorAll('#riwayat-penambahan tr');
+    for (let row of riwayatRows) {
+      const kodeBarcode = row.querySelector('code').textContent;
+      if (kodeBarcode === barcode) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Tambah stok

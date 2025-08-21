@@ -325,6 +325,47 @@ $toko = $result_toko->fetch_assoc();
                         isProcessingBarcode = false;
                         return;
                     }
+                    fetch('get-stok-toko.php?id_toko=' + idToko)
+                        .then(response => response.json())
+                        .then(data2 => {
+                            if (data2.status === 'success') {
+                                if (data2.data.length > 0) {
+                                    for (let item of data2.data) {
+                                        if (item.nama_barang === data.data.nama_barang) {
+                                            if (!confirm(`Barang ${item.nama_barang} sudah ada di stok toko. Apakah Anda yakin ingin memasukkan barang ini?`)) {
+                                                isProcessingBarcode = false;
+                                                updateScannerStatus('Pembatalan masukan barang', 'warning');
+                                                masukanItems = masukanItems.filter(i => i.kode_barcode !== data.data.kode_barcode);
+                                                updateMasukanList();
+                                                updateCounters();
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (masukanItems.length > 1) {
+                                    for (let item of masukanItems) {
+                                        if (item.nama_barang === data.data.nama_barang) {
+                                            if (!confirm(`Barang ${item.nama_barang} sudah ada di daftar. Apakah Anda yakin ingin memasukkan barang ini?`)) {
+                                                isProcessingBarcode = false;
+                                                updateScannerStatus('Pembatalan masukan barang', 'warning');
+                                                masukanItems = masukanItems.filter(i => i.kode_barcode !== data.data.kode_barcode);
+                                                updateMasukanList();
+                                                updateCounters();
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                // totalCollecting = data.total_collecting || 0;
+                                // document.getElementById('count-collecting').textContent = totalCollecting;
+                            } else {
+                                console.error('Error loading collecting data:', data2.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading collecting data:', error);
+                        });
                     masukanItems.push(data.data);
                     updateScannerStatus(`✅ ${data.data.nama_barang} berhasil dipilih untuk dimasukan!`, 'success');
                     showBarangInfo(data.data);
