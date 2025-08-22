@@ -24,6 +24,10 @@
                                         </div>
                                     </div>
 
+                                    <div class="mt-2">
+                                        <input type="text" class="form-control" id="qr-result" autofocus placeholder="Kode QR akan muncul di sini">
+                                    </div>
+
                                     <div class="d-grid gap-2 mt-3">
                                         <button type="button" class="btn btn-success" id="start-scan" onclick="startScanner()">
                                             <i class="fas fa-play"></i> Mulai Scanner
@@ -191,6 +195,8 @@
 
     // Callback saat scan berhasil
     function onScanSuccess(decodedText, decodedResult) {
+        // tampilkan hasil scan di input
+        document.getElementById('qr-result').value = decodedText;
         processBarcode(decodedText);
         updateScannerStatus('QR Code berhasil dibaca!', 'success');
     }
@@ -427,6 +433,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Auto start scanner setelah 1 detik
         setTimeout(startScanner, 1000);
+
+        document.getElementById('qr-result').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                processBarcode(this.value.trim());
+            }
+        });
+
 
         // Load riwayat pengambilan
         loadRiwayatPengambilan();

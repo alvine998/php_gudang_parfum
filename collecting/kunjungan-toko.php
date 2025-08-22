@@ -24,6 +24,10 @@
                                         <span class="text-info">📷 Mempersiapkan scanner...</span>
                                     </div>
 
+                                    <div class="mt-2">
+                                        <input type="text" class="form-control" id="qr-result" autofocus placeholder="Kode QR akan muncul di sini">
+                                    </div>
+
                                     <!-- Manual Input -->
                                     <!-- <div class="mt-3" id="manual-input-section" style="display: none;">
                                         <label for="manual-input" class="form-label fw-bold">
@@ -130,8 +134,8 @@
 
     // Callback saat scan berhasil
     function onScanSuccess(decodedText, decodedResult) {
-        console.log(`QR Code detected: ${decodedText}`);
-
+        // tampilkan hasil scan di input
+        document.getElementById('qr-result').value = decodedText;
         // Update status
         updateScannerStatus('QR Code berhasil dibaca!', 'success');
 
@@ -347,6 +351,11 @@
             updateScannerStatus('Memulai scanner otomatis...', 'info');
             startScanner();
         }, 500);
+        document.getElementById('qr-result').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                processTokoBarcode(this.value.trim());
+            }
+        });
     });
 
     // Cleanup saat halaman ditutup

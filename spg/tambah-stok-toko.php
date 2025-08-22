@@ -71,6 +71,9 @@ if (!$toko) {
                     </button>
                   </div>
                 </div>
+                <div class="mt-2 px-3">
+                  <input type="text" class="form-control" id="qr-result" autofocus placeholder="Kode QR akan muncul di sini">
+                </div>
               </div>
             </div>
 
@@ -224,6 +227,7 @@ if (!$toko) {
 
   // Callback saat scan berhasil
   function onScanSuccess(decodedText, decodedResult) {
+    document.getElementById('qr-result').value = decodedText; // Update input text dengan hasil scan
     processBarcode(decodedText);
     updateScannerStatus('QR Code berhasil dibaca!', 'success');
   }
@@ -542,7 +546,11 @@ if (!$toko) {
   document.addEventListener('DOMContentLoaded', function() {
     // Auto start scanner setelah 1 detik
     setTimeout(startScanner, 1000);
-
+    document.getElementById('qr-result').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        processBarcode(this.value.trim());
+      }
+    });
     // Load riwayat penambahan
     loadRiwayatPenambahan();
   });

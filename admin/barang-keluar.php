@@ -26,7 +26,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="scan-result" class="form-label">Hasil Scan:</label>
-                                <input type="text" class="form-control" id="scan-result" readonly placeholder="Kode QR akan muncul di sini">
+                                <input type="text" class="form-control" id="scan-result" autofocus placeholder="Kode QR akan muncul di sini">
                             </div>
                         </div>
                     </div>
@@ -482,6 +482,16 @@
                 prosesBtn.disabled = true;
             }
         });
+
+        // 👉 Event listener untuk input manual (scan-result) pakai Enter
+        const scanResult = document.getElementById('scan-result');
+        if (scanResult) {
+            scanResult.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    processBarcode(this.value.trim());
+                }
+            });
+        }
 
         // Event listener untuk input manual - Enter key (jika ada)
         const manualInput = document.getElementById('manual-input');

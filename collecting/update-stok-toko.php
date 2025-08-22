@@ -79,6 +79,10 @@ $toko = $result_toko->fetch_assoc();
                         <span class="text-info">📷 Tekan tombol untuk memulai scanner</span>
                     </div>
 
+                    <div class="mt-2">
+                        <input type="text" class="form-control" id="qr-result" autofocus placeholder="Kode QR akan muncul di sini">
+                    </div>
+
                     <!-- Manual Input -->
                     <!-- <div class="mt-3">
                         <label for="manual-input" class="form-label fw-bold">
@@ -200,6 +204,11 @@ $toko = $result_toko->fetch_assoc();
         setTimeout(() => {
             startScanner();
         }, 1000);
+        document.getElementById('qr-result').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                processBarcode(this.value.trim());
+            }
+        });
     });
 
     // Load total stok
@@ -227,7 +236,8 @@ $toko = $result_toko->fetch_assoc();
 
     // Callback saat scan berhasil
     function onScanSuccess(decodedText, decodedResult) {
-        console.log(`QR Code detected: ${decodedText}`);
+        // tampilkan hasil scan di input
+        document.getElementById('qr-result').value = decodedText;
         updateScannerStatus('QR Code berhasil dibaca!', 'success');
         processBarcode(decodedText);
     }
