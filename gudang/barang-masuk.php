@@ -26,7 +26,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="scan-result" class="form-label">Hasil Scan:</label>
-                                <input type="text" class="form-control" id="scan-result" readonly placeholder="Kode QR akan muncul di sini">
+                                <input type="text" class="form-control" id="scan-result" autofocus placeholder="Kode QR akan muncul di sini">
                             </div>
                         </div>
                     </div>
@@ -168,16 +168,18 @@
     }
 
     function processBarcode(code = null) {
-        const barcodeValue = code || document.getElementById('manual-input').value;
+        const barcodeValue = code ||
+            (document.getElementById('scan-result')?.value ?? '') ||
+            (document.getElementById('manual-input')?.value ?? '');
 
         if (!barcodeValue) {
             alert('Silakan scan QR code atau masukkan kode secara manual');
             return;
         }
 
-        // Clear manual input after processing
-        if (document.getElementById('manual-input')) {
-            document.getElementById('manual-input').value = '';
+        // Update display
+        if (document.getElementById('scan-result')) {
+            document.getElementById('scan-result').value = barcodeValue;
         }
 
         // Update scan result display
@@ -383,12 +385,28 @@
             startScanner();
         }, 1000);
 
-        // Event listener untuk input manual - Enter key
-        document.getElementById('manual-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                processBarcode();
+        // Helper function untuk tambahkan listener Enter
+        function addEnterListener(id, callback) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // prevent form submit
+                        const value = el.value.trim();
+                        if (value) {
+                            callback(value); // pass the input value
+                        } else {
+                            alert("Input masih kosong!");
+                        }
+                    }
+                });
             }
-        });
+        }
+
+
+        // Tambahkan event ke masing-masing input
+        addEnterListener('manual-input', processBarcode);
+        addEnterListener('scan-result', processBarcode);
     });
 
     // Cleanup saat halaman ditutup
