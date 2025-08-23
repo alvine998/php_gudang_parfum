@@ -79,13 +79,46 @@
                                     </select>
                                 </div>
 
-                                <button type="button" class="btn btn-danger" id="proses-btn" onclick="prosesBarangKeluar()" disabled>
+                                <!-- <button type="button" class="btn btn-danger" id="proses-btn" onclick="prosesBarangKeluar()" disabled>
                                     📤 Proses Barang Keluar
                                 </button>
                                 <button type="button" class="btn btn-secondary" onclick="resetForm()">
                                     🔄 Reset
-                                </button>
+                                </button> -->
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Show Array Masukan Items -->
+                    <div class="mt-3">
+                        <h5>Daftar Barang Keluar:</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm mt-2 mb-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Kode Barcode</th>
+                                        <th class="text-center">Nama Barang</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="masukan-items-table">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Belum ada data</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="d-none" id="masukan-items-footer">
+                                    <tr>
+                                        <td colspan="3" class="text-end">
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="removeAllMasukanItems()">
+                                                🗑️ Hapus Semua Item
+                                            </button>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="processAllMasukanItems()">
+                                                📦 Proses Semua Item
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 
@@ -125,6 +158,9 @@
 <script>
     let html5QrcodeScanner;
     let isScanning = false;
+    let masukanItems = [];
+
+    let lastScanTime = 0; // track last scan timestamp
 
     function onScanSuccess(decodedText, decodedResult) {
         // Tampilkan hasil scan
@@ -133,6 +169,14 @@
         <span class="text-success">✅ QR Code berhasil dibaca!</span>
     `;
         document.getElementById('scanner-status').className = 'alert alert-success';
+
+        const now = Date.now();
+
+        // if less than 2 seconds since last scan, ignore
+        if (now - lastScanTime < 2000) {
+            return;
+        }
+        lastScanTime = now;
 
         // Proses barcode
         processBarcode(decodedText);
@@ -199,6 +243,81 @@
         });
     }
 
+    function renderMasukanTable() {
+        const tbody = document.getElementById("masukan-items-table");
+        tbody.innerHTML = "";
+
+        if (masukanItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada data</td></tr>`;
+            document.getElementById("masukan-items-footer").classList.add("d-none");
+            return;
+        }
+        document.getElementById("masukan-items-footer").classList.remove("d-none");
+
+        masukanItems.forEach((item, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="text-center">${item.kode_barcode}</td>
+                <td class="text-center">${item.nama_barang ?? "-"}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-danger" onclick="removeMasukanItem(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function removeMasukanItem(index) {
+        if (confirm("Apakah Anda yakin ingin menghapus item ini?")) {
+            masukanItems.splice(index, 1);
+            renderMasukanTable();
+        }
+    }
+
+    function removeAllMasukanItems() {
+        if (confirm("Apakah Anda yakin ingin menghapus semua item?")) {
+            masukanItems = [];
+            renderMasukanTable();
+        }
+    }
+
+    function processAllMasukanItems() {
+        if (masukanItems.length === 0) {
+            showAlert('error', '❌ Tidak ada item untuk diproses!');
+            return;
+        }
+        showLoading('Memproses semua barang masuk...');
+
+        if (!confirm(`Apakah Anda yakin ingin memproses ${masukanItems.length} item?`)) {
+            hideLoading();
+            return;
+        }
+
+        fetch('proses-bulk-barang-keluar.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: masukanItems
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert('success', '✅ ' + data.message);
+                    masukanItems = []; // kosongkan daftar setelah sukses
+                    renderMasukanTable();
+                } else {
+                    showAlert('error', '❌ ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showAlert('error', '❌ Error saat proses bulk');
+            });
+    }
+
     function processBarcode(code = null) {
         const barcodeValue = code || document.getElementById('manual-input').value;
 
@@ -247,8 +366,24 @@
 
                     if (data.status === 'success') {
                         // Barcode ditemukan - tampilkan info produk
-                        showBarcodeInfo(data.data);
-                        showAlert('success', '✅ Barcode ditemukan di database!');
+                        // showBarcodeInfo(data.data);
+                        if (masukanItems.some(i => i.kode_barcode === data.data.kode_barcode)) {
+                            alert("⚠️ Barcode sudah ada di daftar!");
+                            return;
+                        }
+                        if (data.data.status === 'di_gudang') {
+                            masukanItems.push({
+                                kode_barcode: data.data.kode_barcode,
+                                nama_barang: data.data.nama_barang,
+                                qty: 1
+                            });
+                            renderMasukanTable();
+                            showAlert('success', '✅ Barcode ditemukan di database!');
+                        } else {
+                            showAlert('error', '❌ Barang belum di gudang atau sudah terjual!');
+                        }
+
+
                     } else {
                         // Barcode tidak ditemukan
                         hideBarcodeInfo();
