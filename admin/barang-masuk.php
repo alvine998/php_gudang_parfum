@@ -127,6 +127,9 @@
     let isScanning = false;
     let masukanItems = [];
 
+    let lastScanTime = 0; // track last scan timestamp
+
+
     function onScanSuccess(decodedText) {
         const scanInput = document.getElementById('scan-result');
         const statusBox = document.getElementById('scanner-status');
@@ -136,6 +139,14 @@
             statusBox.innerHTML = `<span class="text-success">✅ QR Code berhasil dibaca!</span>`;
             statusBox.className = 'alert alert-success';
         }
+
+        const now = Date.now();
+
+        // if less than 2 seconds since last scan, ignore
+        if (now - lastScanTime < 2000) {
+            return;
+        }
+        lastScanTime = now;
 
         // Tambahkan ke daftar (tidak langsung proses DB)
         processBarcode(decodedText);
@@ -292,6 +303,11 @@
             return;
         }
         showLoading('Memproses semua barang masuk...');
+
+        if(!confirm(`Apakah Anda yakin ingin memproses ${masukanItems.length} item?`)) {
+            hideLoading();
+            return;
+        }
 
         fetch('proses-bulk-barang-masuk.php', {
                 method: 'POST',
