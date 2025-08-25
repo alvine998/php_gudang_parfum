@@ -30,12 +30,13 @@
                                     <tr>
                                         <th class="text-center">Kode Barcode</th>
                                         <th class="text-center">Nama Barang</th>
+                                        <th class="text-center">Jenis Penjualan</th>
                                         <th class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="masukan-items-table">
                                     <tr>
-                                        <td colspan="3" class="text-center text-muted">Belum ada data</td>
+                                        <td colspan="4" class="text-center text-muted">Belum ada data</td>
                                     </tr>
                                 </tbody>
                                 <tfoot class="d-none" id="masukan-items-footer">
@@ -153,6 +154,13 @@
             <tr>
                 <td class="text-center">${item.kode_barcode}</td>
                 <td class="text-center">${item.nama_barang ?? "-"}</td>
+                <td class="text-center">
+                    <select class="form-select form-select-sm" onchange="masukanItems[${index}].jenis_penjualan=this.value">
+                        <option value="perorangan" ${item.jenis_penjualan === 'perorangan' ? 'selected' : ''}>Perorangan</option>
+                        <option value="shopee" ${item.jenis_penjualan === 'shopee' ? 'selected' : ''}>Shopee</option>
+                        <option value="rusak" ${item.jenis_penjualan === 'rusak' ? 'selected' : ''}>Rusak</option>
+                    </select>
+                </td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-danger" onclick="removeMasukanItem(${index})">Hapus</button>
                 </td>
