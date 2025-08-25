@@ -2,84 +2,60 @@
 
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <div class="card">
                 <div class="card-header">
                     <h4 class="mb-0">📦 Scan QR Code Barang Masuk</h4>
                 </div>
                 <div class="card-body">
                     <!-- QR Scanner Container -->
-                    <div class="qr-scanner-container mb-3">
-                        <div id="qr-reader" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+                    <div id="qr-reader" style="width:100%; max-width:500px; margin:0 auto;"></div>
+
+                    <!-- Status -->
+                    <div class="mt-3">
+                        <label class="form-label">Status Scanner:</label>
+                        <div id="scanner-status" class="alert alert-info">Memulai kamera...</div>
                     </div>
 
-                    <!-- Status dan Hasil -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="scanner-status" class="form-label">Status Scanner:</label>
-                                <div id="scanner-status" class="alert alert-info">
-                                    Memulai kamera...
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="scan-result" class="form-label">Hasil Scan:</label>
-                                <input type="text" class="form-control" id="scan-result" autofocus placeholder="Kode QR akan muncul di sini">
-                            </div>
-                        </div>
+                    <!-- Hasil Scan -->
+                    <div class="mt-3">
+                        <label class="form-label">Hasil Scan:</label>
+                        <input type="text" class="form-control" id="scan-result" autofocus placeholder="Kode QR akan muncul di sini">
                     </div>
 
-                    <!-- Hasil Pengecekan Database -->
-                    <div id="barcode-info" class="card mt-3" style="display: none;">
-                        <div class="card-header">
-                            <h6 class="mb-0">📋 Informasi Produk</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>Nama Barang:</strong>
-                                    <p id="nama-barang" class="mb-2">-</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Kode Barcode:</strong>
-                                    <p id="kode-barcode" class="mb-2">-</p>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>Status:</strong>
-                                    <p id="status-barang" class="mb-2">
-                                        <span id="status-badge" class="badge">-</span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Diupdate:</strong>
-                                    <p id="updated-at" class="mb-2">-</p>
-                                </div>
-                            </div>
-                            <div class="mt-3" id="action-buttons">
-                                <button type="button" class="btn btn-primary" id="proses-btn" onclick="prosesBarangMasuk()">
-                                    📦 Proses Barang Masuk
-                                </button>
-                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                    🔄 Reset
-                                </button>
-                            </div>
+                    <!-- Daftar Barang Masuk -->
+                    <div class="mt-4">
+                        <h5>Daftar Barang Masuk:</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm w-100">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Kode QR</th>
+                                        <th class="text-center">Nama Barang</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="masukan-items-table">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Belum ada data</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="d-none" id="masukan-items-footer">
+                                    <tr>
+                                        <td colspan="4" class="text-end">
+                                            <button class="btn btn-danger btn-sm" onclick="removeAllMasukanItems()">🗑️ Hapus Semua</button>
+                                            <button class="btn btn-primary btn-sm" onclick="processAllMasukanItems()">📦 Proses Semua</button>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 
-
-
-                    <!-- Tombol Kontrol -->
+                    <!-- Kontrol Scanner -->
                     <div class="mt-3 text-center">
-                        <button type="button" class="btn btn-success mb-2" id="start-scan" onclick="startScanner()">
-                            📷 Mulai Scanner
-                        </button>
-                        <button type="button" class="btn btn-danger mb-2" id="stop-scan" onclick="stopScanner()">
-                            ⏹️ Hentikan Scanner
-                        </button>
+                        <button type="button" class="btn btn-success mb-2" id="start-scan" onclick="startScanner()">📷 Mulai Scanner</button>
+                        <button type="button" class="btn btn-danger mb-2" id="stop-scan" onclick="stopScanner()" disabled>⏹️ Hentikan Scanner</button>
                     </div>
                 </div>
             </div>
@@ -87,31 +63,24 @@
     </div>
 </div>
 
-<!-- QR Code Scanner Library -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script>
     let html5QrcodeScanner;
     let isScanning = false;
+    let masukanItems = [];
+    let lastScanTime = 0;
 
-    function onScanSuccess(decodedText, decodedResult) {
-        // Tampilkan hasil scan
+    function onScanSuccess(decodedText) {
         document.getElementById('scan-result').value = decodedText;
-        document.getElementById('scanner-status').innerHTML = `
-        <span class="text-success">✅ QR Code berhasil dibaca!</span>
-    `;
+        document.getElementById('scanner-status').innerHTML = `<span class="text-success">✅ QR Code berhasil dibaca!</span>`;
         document.getElementById('scanner-status').className = 'alert alert-success';
 
-        // Proses barcode
-        processBarcode(decodedText);
+        const now = Date.now();
+        if (now - lastScanTime < 2000) return; // cegah double scan cepat
+        lastScanTime = now;
 
-        // Optional: Hentikan scanner setelah berhasil scan
-        // stopScanner();
-    }
-
-    function onScanFailure(error) {
-        // Handle scan failure - bisa diabaikan untuk error normal
-        // console.warn(`QR scan error: ${error}`);
+        processBarcode(decodedText.trim());
     }
 
     function startScanner() {
@@ -124,296 +93,166 @@
                 height: 250
             },
             aspectRatio: 1.0,
-            rememberLastUsedCamera: true
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
         };
 
         html5QrcodeScanner = new Html5Qrcode("qr-reader");
-
         html5QrcodeScanner.start({
-                facingMode: "environment"
-            }, // Gunakan kamera belakang jika tersedia
-            config,
-            onScanSuccess,
-            onScanFailure
-        ).then(() => {
+            facingMode: "environment"
+        }, config, onScanSuccess, (err) => {
+            console.warn("Scan error:", err);
+        }).then(() => {
             isScanning = true;
-            document.getElementById('scanner-status').innerHTML = `
-            <span class="text-primary">📷 Scanner aktif - Arahkan kamera ke QR code</span>
-        `;
+            document.getElementById('scanner-status').innerHTML = `<span class="text-primary">📷 Scanner aktif</span>`;
             document.getElementById('scanner-status').className = 'alert alert-primary';
             document.getElementById('start-scan').disabled = true;
             document.getElementById('stop-scan').disabled = false;
         }).catch(err => {
-            document.getElementById('scanner-status').innerHTML = `
-            <span class="text-danger">❌ Error: ${err}</span>
-        `;
+            document.getElementById('scanner-status').innerHTML = `<span class="text-danger">❌ ${err}</span>`;
             document.getElementById('scanner-status').className = 'alert alert-danger';
         });
     }
 
     function stopScanner() {
         if (!isScanning) return;
-
         html5QrcodeScanner.stop().then(() => {
             isScanning = false;
-            document.getElementById('scanner-status').innerHTML = `
-            <span class="text-secondary">⏹️ Scanner dihentikan</span>
-        `;
+            document.getElementById('scanner-status').innerHTML = `<span class="text-secondary">⏹️ Scanner dihentikan</span>`;
             document.getElementById('scanner-status').className = 'alert alert-secondary';
             document.getElementById('start-scan').disabled = false;
             document.getElementById('stop-scan').disabled = true;
-        }).catch(err => {
-            console.error("Error stopping scanner:", err);
-        });
+        }).catch(err => console.error("Stop scanner error:", err));
     }
 
-    function processBarcode(code = null) {
-        const barcodeValue = code ||
-            (document.getElementById('scan-result')?.value ?? '') ||
-            (document.getElementById('manual-input')?.value ?? '');
+    // Proses ke DB
+    function processBarcode(code) {
+        if (!code) return;
+        showLoading('Memeriksa QR di database...');
 
-        if (!barcodeValue) {
-            alert('Silakan scan QR code atau masukkan kode secara manual');
-            return;
-        }
-
-        // Update display
-        if (document.getElementById('scan-result')) {
-            document.getElementById('scan-result').value = barcodeValue;
-        }
-
-        // Update scan result display
-        document.getElementById('scan-result').value = barcodeValue;
-
-        // Show loading
-        showLoading('Memeriksa barcode di database...');
-
-        // Cek barcode di database menggunakan AJAX
         fetch('cek-barcode.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: 'kode_barcode=' + encodeURIComponent(barcodeValue)
+                body: 'kode_barcode=' + encodeURIComponent(code)
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                hideLoading();
-
                 if (data.status === 'success') {
-                    // Barcode ditemukan - tampilkan info produk
-                    showBarcodeInfo(data.data);
-                    showAlert('success', '✅ Barcode ditemukan di database!');
+                    if (masukanItems.some(i => i.kode_barcode === data.data.kode_barcode)) {
+                        alert('⚠️ QR Barang sudah ada di daftar!');
+                        return;
+                    }
+                    if (data.data.status === 'di_gudang') {
+                        alert('⚠️ QR Barang sudah ada di gudang!');
+                        showAlert('warning', '⚠️ QR Barang sudah ada di gudang!');
+                        return;
+                    }
+
+                    masukanItems.push({
+                        kode_barcode: data.data.kode_barcode,
+                        nama_barang: data.data.nama_barang,
+                        status: data.data.status
+                    });
+                    renderMasukanTable();
+                    showAlert('success', '✅ Barang ditambahkan ke daftar!');
                 } else {
-                    // Barcode tidak ditemukan
-                    hideBarcodeInfo();
                     showAlert('error', '❌ ' + data.message);
                 }
             })
-            .catch(error => {
-                hideLoading();
-                console.error('Error:', error);
-                showAlert('error', '❌ Terjadi kesalahan saat memeriksa barcode');
+            .catch(err => {
+                console.error(err);
+                showAlert('error', '❌ Error koneksi ke server');
             });
     }
 
-    function showBarcodeInfo(data) {
-        document.getElementById('nama-barang').textContent = data.nama_barang;
-        document.getElementById('kode-barcode').textContent = data.kode_barcode;
-        document.getElementById('updated-at').textContent = new Date(data.updated_at).toLocaleString('id-ID');
+    function renderMasukanTable() {
+        const tbody = document.getElementById("masukan-items-table");
+        tbody.innerHTML = "";
 
-        // Update status dengan badge
-        const statusBadge = document.getElementById('status-badge');
-        const status = data.status || 'pending';
-
-        statusBadge.textContent = status;
-
-        // Set warna badge berdasarkan status
-        statusBadge.className = 'badge ';
-        if (status === 'di_gudang') {
-            statusBadge.className += 'bg-success';
-        } else if (status === 'pending') {
-            statusBadge.className += 'bg-warning text-dark';
-        } else if (status === 'terjual') {
-            statusBadge.className += 'bg-danger text-white';
-        } else {
-            statusBadge.className += 'bg-secondary';
-        }
-
-        // Sembunyikan tombol proses jika status sudah di_gudang
-        const prosesBtn = document.getElementById('proses-btn');
-        if (status === 'di_gudang' || status === 'terjual') {
-            prosesBtn.style.display = 'none';
-
-            // Tampilkan pesan bahwa barang sudah di gudang
-            document.getElementById('scanner-status').innerHTML = `
-                <span class="text-success">✅ Barang sudah berada di gudang</span>
-            `;
-            document.getElementById('scanner-status').className = 'alert alert-success';
-        } else {
-            prosesBtn.style.display = 'inline-block';
-            prosesBtn.disabled = false; // Pastikan tombol tidak disabled
-        }
-
-        document.getElementById('barcode-info').style.display = 'block';
-    }
-
-    function hideBarcodeInfo() {
-        document.getElementById('barcode-info').style.display = 'none';
-    }
-
-    function showLoading(message) {
-        document.getElementById('scanner-status').innerHTML = `
-            <span class="text-info">🔄 ${message}</span>
-        `;
-        document.getElementById('scanner-status').className = 'alert alert-info';
-    }
-
-    function hideLoading() {
-        // Status akan diupdate oleh fungsi lain
-    }
-
-    function showAlert(type, message) {
-        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-        document.getElementById('scanner-status').innerHTML = `
-            <span>${message}</span>
-        `;
-        document.getElementById('scanner-status').className = `alert ${alertClass}`;
-    }
-
-    function prosesBarangMasuk() {
-        const kodeBarcode = document.getElementById('scan-result').value;
-
-        if (!kodeBarcode) {
-            alert('Tidak ada barcode yang dipilih');
+        if (masukanItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Belum ada data</td></tr>`;
+            document.getElementById("masukan-items-footer").classList.add("d-none");
             return;
         }
 
-        if (confirm(`Apakah Anda yakin ingin memproses barang masuk untuk kode: ${kodeBarcode}?`)) {
-            // Show loading
-            showLoading('Memproses barang masuk...');
+        document.getElementById("masukan-items-footer").classList.remove("d-none");
 
-            // Disable tombol proses
-            document.getElementById('proses-btn').disabled = true;
+        masukanItems.forEach((item, index) => {
+            tbody.innerHTML += `
+            <tr>
+                <td class="text-center">${item.kode_barcode}</td>
+                <td class="text-center">${item.nama_barang ?? "-"}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-danger" onclick="removeMasukanItem(${index})">Hapus</button>
+                </td>
+            </tr>`;
+        });
+    }
 
-            // Proses barang masuk menggunakan AJAX
-            fetch('proses-barang-masuk.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'kode_barcode=' + encodeURIComponent(kodeBarcode)
-                })
-                .then(response => {
-                    // Debug: log response
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers.get('content-type'));
-
-                    if (!response.ok) {
-                        throw new Error('HTTP error! status: ' + response.status);
-                    }
-
-                    return response.text(); // Gunakan text() dulu untuk debug
-                })
-                .then(text => {
-                    console.log('Raw response:', text); // Debug: lihat response mentah
-
-                    try {
-                        const data = JSON.parse(text);
-                        console.log('Parsed data:', data); // Debug: lihat data parsed
-
-                        if (data.status === 'success') {
-                            // Berhasil diproses
-                            showAlert('success', '✅ ' + data.message);
-
-                            // Update status di tampilan
-                            const statusBadge = document.getElementById('status-badge');
-                            statusBadge.textContent = 'di_gudang';
-                            statusBadge.className = 'badge bg-success';
-
-                            // Sembunyikan tombol proses
-                            document.getElementById('proses-btn').style.display = 'none';
-
-                            // Reset disabled state untuk proses selanjutnya
-                            document.getElementById('proses-btn').disabled = false;
-
-                            // Play success sound (opsional)
-                            // playSuccessSound();
-
-                        } else {
-                            // Gagal diproses
-                            showAlert('error', '❌ ' + data.message);
-                            document.getElementById('proses-btn').disabled = false;
-                        }
-                    } catch (parseError) {
-                        console.error('JSON Parse Error:', parseError);
-                        console.error('Raw text that failed to parse:', text);
-                        showAlert('error', '❌ Response tidak valid dari server');
-                        document.getElementById('proses-btn').disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Fetch Error:', error);
-                    showAlert('error', '❌ Terjadi kesalahan saat memproses barang masuk: ' + error.message);
-                    document.getElementById('proses-btn').disabled = false;
-                });
+    function removeMasukanItem(index) {
+        if (confirm("Hapus item ini?")) {
+            masukanItems.splice(index, 1);
+            renderMasukanTable();
         }
     }
 
-    function resetForm() {
-        document.getElementById('scan-result').value = '';
-        if (document.getElementById('manual-input')) {
-            document.getElementById('manual-input').value = '';
+    function removeAllMasukanItems() {
+        if (confirm("Hapus semua item?")) {
+            masukanItems = [];
+            renderMasukanTable();
         }
-        hideBarcodeInfo();
-
-        // Reset tombol proses ke keadaan normal
-        const prosesBtn = document.getElementById('proses-btn');
-        prosesBtn.disabled = false;
-        prosesBtn.style.display = 'inline-block';
-
-        document.getElementById('scanner-status').innerHTML = `
-            <span class="text-secondary mt-2">🔄 Form direset</span>
-        `;
-        document.getElementById('scanner-status').className = 'alert alert-secondary';
     }
 
-    // Auto start scanner saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', function() {
-        // Delay sedikit untuk memastikan elemen sudah siap
-        setTimeout(() => {
-            startScanner();
-        }, 1000);
-
-        // Helper function untuk tambahkan listener Enter
-        function addEnterListener(id, callback) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); // prevent form submit
-                        const value = el.value.trim();
-                        if (value) {
-                            callback(value); // pass the input value
-                        } else {
-                            alert("Input masih kosong!");
-                        }
-                    }
-                });
-            }
+    function processAllMasukanItems() {
+        if (masukanItems.length === 0) {
+            showAlert('error', '❌ Tidak ada item untuk diproses!');
+            return;
         }
 
+        if (!confirm(`Proses ${masukanItems.length} item?`)) return;
 
-        // Tambahkan event ke masing-masing input
-        addEnterListener('manual-input', processBarcode);
-        addEnterListener('scan-result', processBarcode);
-    });
+        fetch('proses-bulk-barang-masuk.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: masukanItems
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert('success', '✅ ' + data.message);
+                    masukanItems = [];
+                    renderMasukanTable();
+                } else {
+                    showAlert('error', '❌ ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showAlert('error', '❌ Error saat proses bulk');
+            });
+    }
 
-    // Cleanup saat halaman ditutup
-    window.addEventListener('beforeunload', function() {
-        if (isScanning) {
-            stopScanner();
-        }
+    function showLoading(msg) {
+        document.getElementById('scanner-status').innerHTML = `<span class="text-info">🔄 ${msg}</span>`;
+        document.getElementById('scanner-status').className = 'alert alert-info';
+    }
+
+    function showAlert(type, msg) {
+        document.getElementById('scanner-status').innerHTML = msg;
+        document.getElementById('scanner-status').className = `alert ${type === 'success' ? 'alert-success' : 'alert-danger'}`;
+    }
+
+    // Auto start
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => startScanner(), 1000);
+        document.getElementById('scan-result').addEventListener('keypress', e => {
+            if (e.key === 'Enter') processBarcode(e.target.value.trim());
+        });
     });
 </script>
 

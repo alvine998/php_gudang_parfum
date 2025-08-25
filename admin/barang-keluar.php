@@ -238,6 +238,7 @@
                         renderMasukanTable();
                         showAlert('success', '✅ Barang ditemukan & ditambahkan!');
                     } else {
+                        alert('❌ Barang tidak di gudang!');
                         showAlert('error', '❌ Barang tidak di gudang!');
                     }
                 } else {
