@@ -51,7 +51,7 @@ try {
                 'nama_barang' => trim($matches[1]),
                 'kode_barcode' => trim($matches[2]),
                 'waktu' => $row['waktu'],
-                'harga' => 13000
+                'harga' => $id_toko > 333 ? 15000 : 13000
             ];
         }
     }
@@ -103,7 +103,7 @@ try {
     $total_terjual = count($barang_terjual);
     $total_ditarik = count($barang_ditarik);
     $total_dimasukan = count($barang_dimasukan);
-    $total_pendapatan = $total_terjual * 13000;
+    $total_pendapatan = $total_terjual * ($id_toko > 333 ? 15000 : 13000);
 
     // Simpan data untuk print dalam session
     $_SESSION['struk_collecting_data'] = [
