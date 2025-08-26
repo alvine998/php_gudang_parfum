@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$barcodes = $_POST['kode_barcode'] ?? [];
+$barcodes = json_decode($_POST['kode_barcode'], true) ?? [];
 $username = $_SESSION['username'] ?? 'unknown';
 
 if (!is_array($barcodes) || empty($barcodes)) {
