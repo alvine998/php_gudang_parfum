@@ -342,7 +342,7 @@
             return;
         }
 
-        if (!confirm('Apakah Anda yakin ingin mengambil semua barang ini dari gudang?')) return;
+        if (!confirm(`Apakah Anda yakin ingin mengambil ${masukanItems.length} barang ini dari gudang?`)) return;
 
         const barcodes = masukanItems.map(item => item.kode_barcode);
         const btn = document.getElementById('ambil-bulk-btn');
