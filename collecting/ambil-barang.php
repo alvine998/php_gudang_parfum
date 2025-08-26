@@ -183,6 +183,7 @@
     let isScanning = false;
     let currentBarcode = null;
     let masukanItems = [];
+    let lastScanTime = 0;
 
     // Fungsi untuk memulai scanner
     function startScanner() {
@@ -234,6 +235,9 @@
     // Callback saat scan berhasil
     function onScanSuccess(decodedText, decodedResult) {
         document.getElementById('qr-result').value = decodedText;
+        const now = Date.now();
+        if (now - lastScanTime < 3000) return; // cegah double scan cepat
+        lastScanTime = now;
         processBarcode(decodedText);
         updateScannerStatus('QR Code berhasil dibaca!', 'success');
     }

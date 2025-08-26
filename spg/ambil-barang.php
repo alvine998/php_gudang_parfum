@@ -184,6 +184,8 @@
     let currentBarcode = null;
     let masukanItems = [];
 
+    let lastScanTime = 0;
+
     // Fungsi untuk memulai scanner
     function startScanner() {
         if (isScanning) return;
@@ -234,6 +236,9 @@
     // Callback saat scan berhasil
     function onScanSuccess(decodedText, decodedResult) {
         document.getElementById('qr-result').value = decodedText;
+        const now = Date.now();
+        if (now - lastScanTime < 3000) return; // cegah double scan cepat
+        lastScanTime = now;
         processBarcode(decodedText);
         updateScannerStatus('QR Code berhasil dibaca!', 'success');
     }
@@ -279,6 +284,9 @@
                 hideLoading();
                 if (data.status === 'success') {
                     masukanItems.push(data.data);
+                    // if(masukanItems.length > 0 && data.data.kode_barcode) {
+                        
+                    // }
                     renderBulkTable();
                     document.getElementById('bulk-action-buttons').className = 'd-grid gap-2 mt-3';
                     showAlert('Barang ditambahkan ke daftar!', 'success');
