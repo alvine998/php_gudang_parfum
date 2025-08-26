@@ -22,9 +22,9 @@ if (!$toko) {
         <div class="card-header bg-primary text-white">
           <h4 class="mb-0">
             <i class="fas fa-plus-circle"></i>
-            Tambah Stok - <?= htmlspecialchars($toko['nama_toko']); ?>
+            Tambah Stok (Bulk) - <?= htmlspecialchars($toko['nama_toko']); ?>
           </h4>
-          <small>Scan barcode untuk menambahkan barang ke toko</small>
+          <small>Scan barcode untuk menambahkan barang ke toko secara bulk</small>
         </div>
         <div class="card-body">
           <!-- Alert Messages -->
@@ -55,13 +55,11 @@ if (!$toko) {
                 </div>
                 <div class="card-body text-center">
                   <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
-
                   <div class="mt-3">
                     <div id="scanner-status" class="alert alert-info">
                       <i class="fas fa-info-circle"></i> Memulai scanner...
                     </div>
                   </div>
-
                   <div class="d-grid gap-2 mt-3">
                     <button type="button" class="btn btn-success" id="start-scan" onclick="startScanner()">
                       <i class="fas fa-play"></i> Mulai Scanner
@@ -76,61 +74,39 @@ if (!$toko) {
                 </div>
               </div>
             </div>
-
             <div class="col-lg-6">
-              <!-- Informasi Barang -->
-              <div class="card">
+              <div class="card mb-3">
                 <div class="card-header">
-                  <h6 class="mb-0"><i class="fas fa-info"></i> Informasi Barang</h6>
+                  <h6 class="mb-0"><i class="fas fa-barcode"></i> Hasil Scan</h6>
                 </div>
-                <div class="card-body">
-                  <div id="scan-result" class="mb-3">
-                    <div class="text-center text-muted">
-                      <i class="fas fa-qrcode fa-3x mb-3"></i>
-                      <p>Scan barcode untuk melihat informasi barang</p>
-                    </div>
-                  </div>
-
-                  <div id="barcode-info" style="display: none;">
-                    <div class="row">
-                      <div class="col-12">
-                        <div class="mb-3">
-                          <label class="form-label fw-bold">Nama Barang:</label>
-                          <p id="nama-barang" class="form-control-plaintext">-</p>
-                        </div>
-                      </div>
-                      <div class="col-12">
-                        <div class="mb-3">
-                          <label class="form-label fw-bold">Kode Barcode:</label>
-                          <p id="kode-barcode" class="form-control-plaintext font-monospace">-</p>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="mb-3">
-                          <label class="form-label fw-bold">Status:</label>
-                          <p id="status-barang">
-                            <span id="status-badge" class="badge">-</span>
-                          </p>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="mb-3">
-                          <label class="form-label fw-bold">Stok Toko Saat Ini:</label>
-                          <p id="stok-toko" class="form-control-plaintext">-</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="d-grid gap-2" id="action-buttons">
-                      <button type="button" class="btn btn-primary btn-lg" id="tambah-btn" onclick="tambahStok()">
-                        <i class="fas fa-plus"></i> Tambah ke Toko
-                      </button>
-                      <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                        <i class="fas fa-redo"></i> Reset
-                      </button>
-                    </div>
-                  </div>
+                <div class="table-responsive" id="scan-table-wrapper" style="display: none;">
+                  <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-dark">
+                      <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Kode Barcode</th>
+                        <th>Nama Barang</th>
+                        <th style="width: 80px;">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="scan-table-body">
+                      <!-- rows will be appended here -->
+                    </tbody>
+                  </table>
                 </div>
+
+                <div class="text-center text-muted" id="scan-empty-msg">
+                  <p>Arahkan kamera ke QR code untuk menambahkan barang</p>
+                </div>
+
+              </div>
+              <div class="d-grid gap-2 mt-3">
+                <button id="btn-tambah-semua" class="btn btn-primary btn-lg" onclick="tambahSemuaKeToko()" style="display: none;">
+                  <i class="fas fa-plus"></i> Tambah Semua ke Toko
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="resetBulkForm()">
+                  <i class="fas fa-redo"></i> Reset
+                </button>
               </div>
             </div>
           </div>
@@ -156,11 +132,9 @@ if (!$toko) {
           <!-- Tombol Aksi -->
           <div class="row mt-3">
             <div class="col-12 text-center">
-              <!-- Button Selesai & Print (akan muncul jika ada riwayat) -->
               <button id="btn-selesai-print" class="btn btn-success btn-lg me-3" onclick="selesaiDanPrint()" style="display: none;">
                 <i class="fas fa-print"></i> Selesai & Print Receipt
               </button>
-
             </div>
           </div>
         </div>
@@ -169,14 +143,93 @@ if (!$toko) {
   </div>
 </div>
 
+
 <!-- QR Code Scanner Library -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script>
+  function resetBulkForm() {
+    scannedBarcodes = [];
+    document.getElementById('scan-table-wrapper').style.display = 'none';
+    document.getElementById('btn-tambah-semua').style.display = 'none';
+  }
+
   let html5QrcodeScanner;
   let isScanning = false;
-  let currentBarcode = null;
   let idToko = <?= $id_toko ?>;
+  let scannedBarcodes = [];
+  let lastScannedTime = 0; // <-- konsisten, ganti semua ke ini
+
+  // Hapus item dari antrian
+  function removeFromQueue(index) {
+    scannedBarcodes.splice(index, 1);
+    const tbody = document.querySelector('#queue-table tbody');
+    tbody.innerHTML = '';
+    scannedBarcodes.forEach((item, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${item.nama_barang}</td>
+      <td><code>${item.kode_barcode}</code></td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="removeFromQueue(${i})">
+          <i class="fas fa-trash"></i> Hapus
+        </button>
+      </td>`;
+      tbody.appendChild(row);
+    });
+
+    if (scannedBarcodes.length === 0) {
+      document.getElementById('riwayat-penambahan').innerHTML = `
+      <div class="text-center text-muted">
+        <p>Belum ada penambahan hari ini</p>
+      </div>`;
+      document.getElementById('btn-tambah-semua').style.display = 'none';
+    }
+  }
+
+  function renderScanTable() {
+    const wrapper = document.getElementById("scan-table-wrapper");
+    const tbody = document.getElementById("scan-table-body");
+    const emptyMsg = document.getElementById("scan-empty-msg");
+    const btnTambahSemua = document.getElementById("btn-tambah-semua");
+
+    if (scannedBarcodes.length === 0) {
+      wrapper.style.display = "none";
+      emptyMsg.style.display = "block";
+      btnTambahSemua.style.display = "none";
+      return;
+    }
+
+    wrapper.style.display = "block";
+    emptyMsg.style.display = "none";
+    btnTambahSemua.style.display = "block";
+
+    tbody.innerHTML = "";
+
+    scannedBarcodes.forEach((barcode, index) => {
+      // bisa fetch nama_barang dari cek-barcode-stok-toko.php
+      tbody.innerHTML += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${barcode.kode_barcode}</td>
+        <td id="nama-barang-${barcode.kode_barcode}">${barcode.nama_barang}</td>
+        <td>
+          <button class="btn btn-sm btn-danger" onclick="hapusBarcode('${barcode.kode_barcode}')">
+            Hapus
+          </button>
+        </td>
+      </tr>
+    `;
+    });
+  }
+
+  // hapus barcode
+  function hapusBarcode(barcode) {
+    scannedBarcodes = scannedBarcodes.filter(b => b.kode_barcode !== barcode);
+    renderScanTable();
+  }
+
 
   // Fungsi untuk memulai scanner
   function startScanner() {
@@ -188,8 +241,7 @@ if (!$toko) {
         width: 300,
         height: 300
       },
-      aspectRatio: 1.0,
-      rememberLastUsedCamera: true
+      aspectRatio: 1.0
     };
 
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
@@ -198,8 +250,8 @@ if (!$toko) {
         facingMode: "environment"
       },
       config,
-      onScanSuccess,
-      onScanFailure
+      onScanSuccess, // callback sukses
+      onScanFailure // callback gagal
     ).then(() => {
       isScanning = true;
       updateScannerStatus('Scanner aktif - Arahkan kamera ke QR code', 'success');
@@ -211,7 +263,7 @@ if (!$toko) {
     });
   }
 
-  // Fungsi untuk menghentikan scanner
+  // Fungsi menghentikan scanner
   function stopScanner() {
     if (!isScanning) return;
 
@@ -225,12 +277,174 @@ if (!$toko) {
     });
   }
 
-  // Callback saat scan berhasil
-  function onScanSuccess(decodedText, decodedResult) {
-    document.getElementById('qr-result').value = decodedText; // Update input text dengan hasil scan
-    processBarcode(decodedText);
-    updateScannerStatus('QR Code berhasil dibaca!', 'success');
+  // Callback saat QR berhasil discan
+  function onScanSuccess(decodedText) {
+    if (!decodedText) return;
+
+    const now = Date.now();
+    if (now - lastScannedTime < 2000) return; // debounce
+    lastScannedTime = now;
+
+    decodedText = decodedText.trim();
+
+    // Cek ke server apakah barcode valid
+    fetch("cek-barcode-stok-toko.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "kode_barcode=" + encodeURIComponent(decodedText) + "&id_toko=" + idToko
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.exists) {
+          showAlert("Barang sudah ada di stok toko: " + data.nama_barang, "warning");
+        } else {
+          // cek apakah sudah discan sebelumnya
+          const exists = scannedBarcodes.some(item => item.kode_barcode === decodedText);
+          if (exists) {
+            showAlert("Barcode sudah discan: " + decodedText, "info");
+            return;
+          }
+          if (data.data.status !== 'di_spg - <?= $_SESSION['username'] ?>') {
+            showAlert("Barang tidak dapat ditambahkan. Status: " + data.data.status, "warning");
+            return;
+          }
+          // cek nama barang sama
+          if (scannedBarcodes.some(item => item.nama_barang === data.data.nama_barang)) {
+            if (!confirm("Barang dengan varian yang sama sudah ada di antrian. Apakah Anda tetap ingin menambahkan?")) {
+              return;
+            }
+          }
+          fetch('get-riwayat-stok-toko.php?id_toko=' + idToko)
+            .then(response => response.json())
+            .then(data2 => {
+              if (data2.data.length > 0) {
+                if (data2.data.find(val => val.kode_barcode === decodedText)) {
+                  alert('Barang dengan kode barcode ' + decodedText + ' sudah ada dalam riwayat penambahan. Apakah Anda ingin menambahkan stok barang ini ke toko?');
+                  resetForm();
+                  return;
+                }
+                if (data2.data.find(val => val.nama_barang === data.data.nama_barang)) {
+                  if (!confirm(data.data.nama_barang + ' Sudah ada dalam riwayat penambahan. Apakah Anda ingin menambahkan stok barang ini ke toko?')) {
+                    resetForm();
+                    return;
+                  }
+                }
+              }
+            })
+          // Simpan objek barang
+          const item = {
+            kode_barcode: decodedText,
+            nama_barang: data.data.nama_barang || "Tidak diketahui"
+          };
+          scannedBarcodes.push(item);
+
+          // addBarcodeToQueue(item);
+          renderScanTable();
+          showAlert("Barcode ditambahkan: " + decodedText, "success");
+        }
+      })
+      .catch(err => {
+        console.error("Error cek barcode:", err);
+        showAlert("Gagal cek barcode ke server", "danger");
+      });
   }
+
+
+  // Tambahkan barcode ke tabel antrian
+  function addBarcodeToQueue(item) {
+    const container = document.getElementById('riwayat-penambahan');
+    let table = container.querySelector('table');
+
+    if (!table) {
+      container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-sm table-striped" id="queue-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Barang</th>
+              <th>Kode Barcode</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>`;
+      table = container.querySelector('table');
+    }
+
+    const tbody = table.querySelector('tbody');
+    const row = document.createElement('tr');
+    const index = scannedBarcodes.length - 1;
+
+    row.innerHTML = `
+    <td>${tbody.children.length + 1}</td>
+    <td>${item.nama_barang}</td>
+    <td><code>${item.kode_barcode}</code></td>
+    <td>
+      <button class="btn btn-sm btn-danger" onclick="removeFromQueue(${index})">
+        <i class="fas fa-trash"></i> Hapus
+      </button>
+    </td>`;
+    tbody.appendChild(row);
+
+    // Tampilkan tombol "Tambah Semua"
+    document.getElementById('btn-tambah-semua').style.display = 'inline-block';
+  }
+
+
+  // Kirim semua barcode ke server
+  function tambahSemuaKeToko() {
+    if (scannedBarcodes.length === 0) {
+      showAlert('Belum ada barcode di antrian', 'warning');
+      return;
+    }
+
+    if (!confirm(`Apakah yakin menambah ${scannedBarcodes.length} barang ke toko?`)) return;
+
+    const btn = document.getElementById('btn-tambah-semua');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+    // Ambil hanya array kode_barcode
+    const barcodes = scannedBarcodes.map(item => item.kode_barcode);
+
+    const formData = new URLSearchParams();
+    barcodes.forEach(bc => formData.append('kode_barcode[]', bc));
+    formData.append('id_toko', idToko);
+    formData.append('jumlah', 1); // default qty per barcode = 1
+
+    fetch('proses-tambah-stok-toko-bulk.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          showAlert('Semua barang berhasil ditambahkan!', 'success');
+          scannedBarcodes = [];
+          loadRiwayatPenambahan();
+          document.getElementById('queue-table').remove();
+          btn.style.display = 'none';
+        } else {
+          showAlert(data.message || 'Terjadi kesalahan saat menambah stok', 'danger');
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Tambah Semua ke Toko';
+      })
+      .catch(err => {
+        console.error(err);
+        showAlert('Terjadi kesalahan saat menambah stok', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Tambah Semua ke Toko';
+      });
+  }
+
 
   // Callback saat scan gagal (bisa diabaikan)
   function onScanFailure(error) {
@@ -423,10 +637,10 @@ if (!$toko) {
     currentBarcode = null;
     hideBarcodeInfo();
 
-    const tambahBtn = document.getElementById('tambah-btn');
-    tambahBtn.disabled = false;
-    tambahBtn.style.display = 'block';
-    tambahBtn.innerHTML = '<i class="fas fa-plus"></i> Tambah 1 pcs ke Toko';
+    const tambahSemuaBtn = document.getElementById('btn-tambah-semua');
+    tambahSemuaBtn.disabled = false;
+    tambahSemuaBtn.style.display = 'none';
+    tambahSemuaBtn.innerHTML = '<i class="fas fa-plus"></i> Tambah Semua ke Toko';
 
     updateScannerStatus('Siap untuk scan barcode berikutnya', 'info');
   }

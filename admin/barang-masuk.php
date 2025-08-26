@@ -253,18 +253,19 @@
                         alert("⚠️ Barcode sudah ada di daftar!");
                         return;
                     }
-                    if (data.data.status === 'di_gudang') {
-                        alert("❌ Barang sudah berada di gudang!");
+                    if (!data.data.status) {
+                        masukanItems.push({
+                            kode_barcode: data.data.kode_barcode,
+                            nama_barang: data.data.nama_barang,
+                            qty: 1
+                        });
+                        renderMasukanTable();
+                        showAlert('success', '✅ Barcode ditemukan & ditambahkan ke daftar');
+                        return;
+                    } else {    
+                        alert('❌ Status barang saat ini: ' + data.data.status);
                         return;
                     }
-
-                    masukanItems.push({
-                        kode_barcode: data.data.kode_barcode,
-                        nama_barang: data.data.nama_barang,
-                        qty: 1
-                    });
-                    renderMasukanTable();
-                    showAlert('success', '✅ Barcode ditemukan & ditambahkan ke daftar');
 
                 } else {
                     showAlert('error', '❌ ' + data.message);
@@ -304,7 +305,7 @@
         }
         showLoading('Memproses semua barang masuk...');
 
-        if(!confirm(`Apakah Anda yakin ingin memproses ${masukanItems.length} item?`)) {
+        if (!confirm(`Apakah Anda yakin ingin memproses ${masukanItems.length} item?`)) {
             hideLoading();
             return;
         }

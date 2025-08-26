@@ -143,19 +143,20 @@
                         alert('⚠️ QR Barang sudah ada di daftar!');
                         return;
                     }
-                    if (data.data.status === 'di_gudang') {
-                        alert('⚠️ QR Barang sudah ada di gudang!');
-                        showAlert('warning', '⚠️ QR Barang sudah ada di gudang!');
+
+                    if (!data.data.status) {
+                        masukanItems.push({
+                            kode_barcode: data.data.kode_barcode,
+                            nama_barang: data.data.nama_barang,
+                            qty: 1
+                        });
+                        renderMasukanTable();
+                        showAlert('success', '✅ Barcode ditemukan & ditambahkan ke daftar');
+                        return;
+                    } else {
+                        alert('❌ Status barang saat ini: ' + data.data.status);
                         return;
                     }
-
-                    masukanItems.push({
-                        kode_barcode: data.data.kode_barcode,
-                        nama_barang: data.data.nama_barang,
-                        status: data.data.status
-                    });
-                    renderMasukanTable();
-                    showAlert('success', '✅ Barang ditambahkan ke daftar!');
                 } else {
                     showAlert('error', '❌ ' + data.message);
                 }
