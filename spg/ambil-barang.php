@@ -285,7 +285,7 @@
                 if (data.status === 'success') {
                     masukanItems.push(data.data);
                     // if(masukanItems.length > 0 && data.data.kode_barcode) {
-                        
+
                     // }
                     renderBulkTable();
                     document.getElementById('bulk-action-buttons').className = 'd-grid gap-2 mt-3';
@@ -371,6 +371,7 @@
 
                 if (data.status === 'success') {
                     showAlert('Semua barang berhasil diambil!', 'success');
+                    document.getElementById('qr-result').value = '';
                     masukanItems = [];
                     renderBulkTable();
                     loadRiwayatPengambilan();

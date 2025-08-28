@@ -256,7 +256,7 @@
 
     // Proses barcode
     function processBarcode(code = null) {
-        const barcodeValue = code;
+        const barcodeValue = code || document.getElementById('qr-result').value;
         if (!barcodeValue) {
             showAlert('Silakan scan QR code untuk melihat informasi barang', 'warning');
             return;
@@ -267,6 +267,8 @@
             showAlert('Barcode sudah ditambahkan ke daftar', 'warning');
             return;
         }
+
+
 
         currentBarcode = barcodeValue;
         showLoading('Memeriksa barcode di database...');
@@ -367,6 +369,7 @@
 
                 if (data.status === 'success') {
                     showAlert('Semua barang berhasil diambil!', 'success');
+                    document.getElementById('qr-result').value = '';
                     masukanItems = [];
                     renderBulkTable();
                     loadRiwayatPengambilan();
